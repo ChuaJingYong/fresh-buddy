@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Food Expiry Card</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="card">
+    <img src="pizza.png" alt="Pizza" class="food-img" />
+    <div class="card-content">
+      <h2>Pizza</h2>
+      <p class="expiry">Expires in <span class="highlight">7</span> days</p>
+      <p class="note">Has cheese</p>
+      <div class="tags">
+        <span class="tag red">🍽️ Food</span>
+        <span class="tag gray">🛒 1</span>
+      </div>
+      <div class="actions">
+        <button class="delete-btn" onclick="handleDelete()">🗑️ Delete</button>
+        <button class="edit-btn" onclick="handleEdit()">✏️ Edit</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
