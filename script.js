@@ -44,10 +44,18 @@ let foods = [
     },
 ]
 
+// On page load, initialize localStorage if not present, and sync global foods array
+if (!localStorage.getItem('foods')) {
+    localStorage.setItem('foods', JSON.stringify(foods));
+} else {
+    foods = JSON.parse(localStorage.getItem('foods'));
+}
+
 function handleDelete(id){
     // Remove the item from the foods array using the provided id
     foods = foods.filter((food, index) => index !== id);
-
+    // Update localStorage
+    localStorage.setItem('foods', JSON.stringify(foods));
     // Re-display the updated list
     displayCards();
 }
@@ -65,6 +73,16 @@ function handleEdit(id) {
     document.getElementById('expiryDate').value = food.expiryDate // assuming expiryDate is in YYYY-MM-DD format
     document.getElementById('category').value = food.tag.toLowerCase()
     document.getElementById('notes').value = food.notes
+
+    // Show the image in the placeholder if present
+    const placeholder = document.querySelector('.image-placeholder');
+    if (placeholder) {
+        if (food.imageUrl) {
+            placeholder.innerHTML = `<img src="${food.imageUrl}" alt="Uploaded Image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`;
+        } else {
+            placeholder.innerHTML = `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg>`;
+        }
+    }
   
     // Set edit index globally so we know it's not a new item
     editIndex = id;
@@ -72,23 +90,19 @@ function handleEdit(id) {
   
     // Optional: change button text
     document.querySelector('.submit-btn').textContent = 'Save changes'
-  }
-
+}
 
 function displayCards(){
     // Get the parent container
     const foodList = document.getElementById('food-list')
-    // Insert the child element into the food array
-    
     // Clear the foodList first before populating new data
     foodList.innerHTML = ``
 
-    // Get the foods data from local storage
-    // When getting an object from local storage, we need to convert it from JSON back to regular object with JSON.parse()
-    const localStorageFoods = JSON.parse(localStorage.getItem('foods'))
+    // Get the foods data from local storage, handle null gracefully
+    const localStorageFoods = JSON.parse(localStorage.getItem('foods')) || [];
     console.log('localStorageFoods',localStorageFoods)
 
-    localStorageFoods.map((food,index)=>{
+    localStorageFoods.forEach((food,index)=>{
         // Create the child HTML element
         const foodCard = `
         <div class="card" id="${index}">
@@ -113,31 +127,16 @@ function displayCards(){
     })
 }
 
-// 🚧 To fix before next class: Ensure data is stored properly with proper initialization
-
 function addFood(food){
-    // - Take in the user food object
-    // - Insert the object into the array (of food)
-    // foods.push(food)
-    
-    // Improved: Take the "foods" from the local storage instead
-    let localStorageFood = null
-
-    // If local storage of "foods" is found, get foods data from local storage
-    if(localStorage.getItem('foods').length > 0){
-        localStorageFood = JSON.parse(localStorage.getItem('foods'))
-    } else{
-        // else set it as an empty array
-        localStorageFood = []
-    }
-
-    localStorageFood.push(food)
-
-    addToLocalStorage()
+    // Get foods from localStorage, or empty array if not present
+    let localStorageFoods = JSON.parse(localStorage.getItem('foods')) || [];
+    localStorageFoods.push(food);
+    // Update localStorage and global foods array
+    localStorage.setItem('foods', JSON.stringify(localStorageFoods));
+    foods = localStorageFoods;
     // Display all food after new item added
-    displayCards()
+    displayCards();
 }
-
 
 // Open modal function
 function openModal() {
@@ -149,6 +148,11 @@ function openModal() {
 function closeModal() {
     modal.style.display = 'none';
     document.body.style.overflow = 'auto'; // Restore scrolling
+    // Reset image placeholder
+    const placeholder = document.querySelector('.image-placeholder');
+    if (placeholder) {
+        placeholder.innerHTML = `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg>`;
+    }
 }
 
 // Event listeners for opening and closing the modal
@@ -162,7 +166,6 @@ window.addEventListener('click', (event) => {
         closeModal();
     }
 });
-
 
 // Form submission
 form.addEventListener('submit', (event) => {
@@ -204,7 +207,9 @@ form.addEventListener('submit', (event) => {
     // Update the food array (based on the id)
 
     if (editIndex !== null){
-        foods[editIndex] = food
+        foods[editIndex] = food;
+        // Update localStorage after edit
+        localStorage.setItem('foods', JSON.stringify(foods));
         console.log('current food',foods[editIndex])
         // reset editIndex to null since we're done editing
         editIndex = null
@@ -218,13 +223,29 @@ form.addEventListener('submit', (event) => {
 let modalImageUrl = ""
 
 function getImageUrl(){
-    modalImageUrl = prompt('Please enter your image URL')
+    const url = prompt('Please enter your image URL');
+    if (url) {
+        modalImageUrl = url;
+        // Find the image-placeholder div
+        const placeholder = document.querySelector('.image-placeholder');
+        if (placeholder) {
+            // Replace its content with the image
+            placeholder.innerHTML = `<img src="${modalImageUrl}" alt="Uploaded Image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`;
+        }
+    }
 }
 
 // When website finish loading, display cards
 window.addEventListener('load',()=>{
-    displayCards()
-})
+    displayCards();
+    // Reset modal image placeholder to SVG on modal close
+    document.getElementById('itemModal').addEventListener('hide', () => {
+        const placeholder = document.querySelector('.image-placeholder');
+        if (placeholder) {
+            placeholder.innerHTML = `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg>`;
+        }
+    });
+});
 
 function addToLocalStorage(){
     // We use JSON.stringify() when storing objects into local storage
